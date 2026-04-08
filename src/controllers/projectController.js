@@ -13,12 +13,13 @@ exports.getProjects = async (req, res) => {
       title: { $regex: search, $options: "i" }
     }
 
-    const total = await Project.countDocuments(query)
+    const total = await Project.countDocuments(query).maxTimeMS(5000)
 
     const projects = await Project.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
+      .maxTimeMS(5000)
 
     res.json({
       total,
@@ -28,8 +29,11 @@ exports.getProjects = async (req, res) => {
     })
 
   } catch (error) {
-
-    res.status(500).json({ message: error.message })
+    console.error("Error fetching projects:", error)
+    res.status(500).json({ 
+      message: error.message || "Failed to fetch projects",
+      error: process.env.NODE_ENV === "development" ? error : undefined
+    })
 
   }
 }
